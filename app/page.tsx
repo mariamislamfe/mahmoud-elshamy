@@ -30,7 +30,7 @@ export default function HomePage() {
       <Header />
 
       {/* قسم البطل الرئيسي - Hero */}
-<section className="relative overflow-hidden bg-gradient-to-r from-navy/95 via-navy/85 to-navy/70 min-h-[480px] md:min-h-[540px] flex items-center pb-0">
+<section className="relative overflow-hidden bg-gradient-to-r from-navy/95 via-navy/85 to-navy/70 min-h-screen md:min-h-[540px] flex items-center pb-0">
   {/* صورة الخلفية */}
   <div
     className="absolute inset-0 bg-cover bg-center -z-10"
