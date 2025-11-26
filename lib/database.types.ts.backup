@@ -1,0 +1,25 @@
+export type ComplaintStatus = 'pending' | 'review' | 'resolved' | 'rejected'
+
+export interface Complaint {
+  id: string
+  user_id: string
+  category: string
+  subcategory: string
+  description: string
+  location: string
+  phone: string
+  attachments: string[]
+  status: ComplaintStatus
+  tracking_code: string
+  admin_notes?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Profile {
+  id: string
+  phone: string
+  full_name?: string
+  national_id?: string
+  created_at: string
+}

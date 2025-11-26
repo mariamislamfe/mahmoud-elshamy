@@ -1,0 +1,485 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { ComplaintStatus, ComplaintStatusArabic, Complaint } from '@/lib/database.types'
+import { getStatusColor, getStatusText, getStatusIcon } from '@/lib/helpers'
+
+export default function AdminPage() {
+  const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null) // null = loading, false = not admin, true = admin
+  const [userEmail, setUserEmail] = useState<string>('')
+  const [complaints, setComplaints] = useState<Complaint[]>([])
+  const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editStatus, setEditStatus] = useState<ComplaintStatus>('not_reviewed')
+  const [editNotes, setEditNotes] = useState('')
+
+  // Check if user is admin on mount
+  useEffect(() => {
+    checkAdminStatus()
+  }, [])
+
+  // Fetch complaints when admin check is done
+  useEffect(() => {
+    if (isAdmin === true) {
+      fetchComplaints()
+    }
+  }, [isAdmin])
+
+  const checkAdminStatus = async () => {
+    const supabase = createClient()
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      setIsAdmin(false)
+      return
+    }
+
+    setUserEmail(user.email || '')
+
+    // Check if user is in admins table
+    const { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', user.email)
+      .single()
+
+    if (adminError || !adminData) {
+      setIsAdmin(false)
+    } else {
+      setIsAdmin(true)
+    }
+  }
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
+  const fetchComplaints = async () => {
+    setLoading(true)
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching complaints:', error)
+    } else {
+      setComplaints(data || [])
+    }
+    setLoading(false)
+  }
+
+  const handleEditClick = (complaint: Complaint) => {
+    setSelectedComplaint(complaint)
+    setEditStatus(complaint.status)
+    setEditNotes(complaint.admin_notes || '')
+    setShowEditModal(true)
+  }
+
+  const handleUpdateComplaint = async () => {
+    if (!selectedComplaint) return
+
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from('complaints')
+      .update({
+        status: editStatus,
+        admin_notes: editNotes,
+      })
+      .eq('id', selectedComplaint.id)
+
+    if (error) {
+      console.error('Error updating complaint:', error)
+      alert('حدث خطأ في تحديث الشكوى')
+    } else {
+      alert('تم تحديث الشكوى بنجاح')
+      setShowEditModal(false)
+      fetchComplaints()
+    }
+  }
+
+  const handleExportCSV = () => {
+    const filteredData = getFilteredComplaints()
+
+    const headers = ['كود التتبع', 'الاسم', 'الفئة', 'الحالة', 'التاريخ']
+    const rows = filteredData.map((c) => [
+      c.tracking_code,
+      c.full_name || 'غير متوفر',
+      c.category,
+      getStatusText(c.status),
+      new Date(c.created_at).toLocaleDateString('ar-EG'),
+    ])
+
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `complaints_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+  }
+
+  const getFilteredComplaints = () => {
+    return complaints.filter((complaint) => {
+      const statusMatch = statusFilter === 'all' || complaint.status === statusFilter
+      const categoryMatch = categoryFilter === 'all' || complaint.category === categoryFilter
+      return statusMatch && categoryMatch
+    })
+  }
+
+  // Loading State
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-navy via-navy-light to-navy flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6 animate-pulse">
+            <span className="text-navy text-4xl font-black">ن</span>
+          </div>
+          <p className="text-white text-lg font-bold">جاري التحقق من الصلاحيات...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Access Denied Screen
+  if (isAdmin === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-navy via-navy-light to-navy flex items-center justify-center p-4" dir="rtl">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
+          <div className="w-20 h-20 bg-red-100 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6">
+            <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+
+          <h1 className="text-3xl font-black text-navy mb-4">
+            هذه الصفحة للإدارة فقط
+          </h1>
+
+          <p className="text-gray-600 mb-8">
+            عذراً، ليس لديك صلاحية للوصول إلى لوحة التحكم الإدارية.
+          </p>
+
+          <Link
+            href="/"
+            className="inline-block bg-navy hover:bg-navy-light text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            العودة للصفحة الرئيسية
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Dashboard
+  const filteredComplaints = getFilteredComplaints()
+
+  return (
+    <div className="min-h-screen bg-gray-50" dir="rtl">
+      {/* Header */}
+      <header className="bg-white shadow-md border-b-2 border-gold/20">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-navy to-navy-light rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-gold text-2xl font-black">ن</span>
+              </div>
+              <div>
+                <div className="text-navy font-black text-xl">لوحة التحكم</div>
+                <div className="text-gray-500 text-xs font-medium">إدارة الشكاوى</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin/articles"
+                className="bg-gold hover:bg-gold-dark text-white font-bold py-2 px-6 rounded-lg transition-all duration-200"
+              >
+                📰 إدارة المقالات
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-200"
+              >
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Statistics */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <div className="bg-white rounded-2xl p-6 text-center hover:shadow-xl transition border-r-4 border-navy">
+            <div className="text-4xl font-black text-navy mb-2">
+              {complaints.length}
+            </div>
+            <div className="text-gray-600 font-bold text-sm">إجمالي الشكاوى</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 text-center hover:shadow-xl transition border-r-4 border-gray-400">
+            <div className="text-4xl font-black text-gray-600 mb-2">
+              {complaints.filter((c) => c.status === 'not_reviewed').length}
+            </div>
+            <div className="text-gray-600 font-bold text-sm">لم تتراجع</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 text-center hover:shadow-xl transition border-r-4 border-blue-400">
+            <div className="text-4xl font-black text-blue-600 mb-2">
+              {complaints.filter((c) => c.status === 'reviewed').length}
+            </div>
+            <div className="text-gray-600 font-bold text-sm">اتراجعت</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 text-center hover:shadow-xl transition border-r-4 border-yellow-400">
+            <div className="text-4xl font-black text-yellow-600 mb-2">
+              {complaints.filter((c) => c.status === 'in_progress').length}
+            </div>
+            <div className="text-gray-600 font-bold text-sm">بتتنفذ</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 text-center hover:shadow-xl transition border-r-4 border-green-400">
+            <div className="text-4xl font-black text-green-600 mb-2">
+              {complaints.filter((c) => c.status === 'completed').length}
+            </div>
+            <div className="text-gray-600 font-bold text-sm">تمت</div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                تصفية حسب الحالة
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-gold focus:outline-none"
+              >
+                <option value="all">جميع الحالات</option>
+                <option value="not_reviewed">لم تتراجع</option>
+                <option value="reviewed">اتراجعت</option>
+                <option value="in_progress">بتتنفذ</option>
+                <option value="completed">تمت</option>
+              </select>
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                تصفية حسب الفئة
+              </label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-gold focus:outline-none"
+              >
+                <option value="all">جميع الفئات</option>
+                <option value="health">مشاكل صحية</option>
+                <option value="education">مشاكل تعليمية</option>
+                <option value="infrastructure">بنية تحتية</option>
+                <option value="social">مشاكل اجتماعية</option>
+                <option value="economic">مشاكل اقتصادية</option>
+                <option value="public_services">خدمات عامة</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleExportCSV}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-200"
+            >
+              📥 تصدير CSV
+            </button>
+          </div>
+        </div>
+
+        {/* Complaints Table */}
+        <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500 font-bold">جاري التحميل...</div>
+            </div>
+          ) : filteredComplaints.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500 font-bold">لا توجد شكاوى</div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-navy text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-right font-bold">كود التتبع</th>
+                    <th className="px-6 py-4 text-right font-bold">الاسم</th>
+                    <th className="px-6 py-4 text-right font-bold">الهاتف</th>
+                    <th className="px-6 py-4 text-right font-bold">الفئة</th>
+                    <th className="px-6 py-4 text-right font-bold">الحالة</th>
+                    <th className="px-6 py-4 text-right font-bold">التاريخ</th>
+                    <th className="px-6 py-4 text-right font-bold">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredComplaints.map((complaint) => (
+                    <tr
+                      key={complaint.id}
+                      className="border-b border-gray-100 hover:bg-gray-50 transition"
+                    >
+                      <td className="px-6 py-4 font-mono font-bold text-navy">
+                        {complaint.tracking_code}
+                      </td>
+                      <td className="px-6 py-4 font-bold">{complaint.full_name || 'غير متوفر'}</td>
+                      <td className="px-6 py-4" dir="ltr">
+                        {complaint.phone}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm">
+                          {complaint.category === 'health' && '🏥 مشاكل صحية'}
+                          {complaint.category === 'education' && '📚 مشاكل تعليمية'}
+                          {complaint.category === 'infrastructure' && '🏗️ بنية تحتية'}
+                          {complaint.category === 'social' && '⚖️ مشاكل اجتماعية'}
+                          {complaint.category === 'economic' && '💼 مشاكل اقتصادية'}
+                          {complaint.category === 'public_services' && '🏛️ خدمات عامة'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
+                            complaint.status
+                          )}`}
+                        >
+                          {getStatusIcon(complaint.status)} {getStatusText(complaint.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(complaint.created_at).toLocaleDateString('ar-EG')}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleEditClick(complaint)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all duration-200"
+                        >
+                          تعديل
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Edit Modal */}
+      {showEditModal && selectedComplaint && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-navy text-white p-6 rounded-t-2xl">
+              <h2 className="text-2xl font-black">تعديل الشكوى</h2>
+              <p className="text-gold text-sm mt-1">
+                كود التتبع: {selectedComplaint.tracking_code}
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Complaint Details */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm font-bold text-gray-600">الاسم:</span>
+                    <p className="font-bold">{selectedComplaint.full_name || 'غير متوفر'}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-gray-600">الهاتف:</span>
+                    <p className="font-bold" dir="ltr">
+                      {selectedComplaint.phone}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-gray-600">الموقع:</span>
+                  <p className="font-bold">{selectedComplaint.location}</p>
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-gray-600">الوصف:</span>
+                  <p className="text-gray-700">{selectedComplaint.description}</p>
+                </div>
+                {selectedComplaint.image_url && (
+                  <div>
+                    <span className="text-sm font-bold text-gray-600">الصورة المرفقة:</span>
+                    <img
+                      src={selectedComplaint.image_url}
+                      alt="صورة الشكوى"
+                      className="mt-2 rounded-lg max-w-md border border-gray-200"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Status Update */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  تحديث الحالة
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as ComplaintStatus)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gold focus:outline-none"
+                >
+                  <option value="not_reviewed">لم تتراجع</option>
+                  <option value="reviewed">اتراجعت</option>
+                  <option value="in_progress">بتتنفذ</option>
+                  <option value="completed">تمت</option>
+                </select>
+              </div>
+
+              {/* Admin Notes */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  ملاحظات الإدارة
+                </label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gold focus:outline-none resize-none"
+                  rows={4}
+                  placeholder="أضف ملاحظات أو تحديثات..."
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={handleUpdateComplaint}
+                  className="flex-1 bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg"
+                >
+                  حفظ التغييرات
+                </button>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-xl transition-all duration-200"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
