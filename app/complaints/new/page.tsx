@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -12,23 +12,17 @@ function ComplaintFormContent() {
   const categoryId = searchParams.get('category')
   const router = useRouter()
 
-  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [formData, setFormData] = useState<any>({})
+  const [formData, setFormData] = useState<any>({
+    fullName: '',
+    phone: '',
+    subcategory: '',
+    description: '',
+    location: ''
+  })
 
   const category = complaintCategories.find((cat) => cat.id === categoryId)
-
-  useEffect(() => {
-    const supabase = createClient()
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      if (!user) {
-        router.push('/auth/login')
-      }
-    })
-  }, [router])
 
   if (!category) {
     return (
@@ -59,14 +53,13 @@ function ComplaintFormContent() {
       const supabase = createClient()
 
       const complaintData = {
-        user_id: user.id,
+        full_name: formData.fullName || '',
         category: category.name,
         subcategory: formData.subcategory || '',
         description: formData.description || '',
         location: formData.location || '',
         phone: formData.phone || '',
-        attachments: [],
-        tracking_code: '',
+        status: 'not_reviewed',
       }
 
       const { data, error: insertError } = await supabase
@@ -122,6 +115,23 @@ function ComplaintFormContent() {
                   <p className="text-gray-600 text-sm">
                     Please provide accurate information for faster resolution
                   </p>
+                </div>
+
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الاسم الكامل <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.fullName || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, fullName: e.target.value })
+                    }
+                    placeholder="أدخل اسمك الكامل"
+                    className="input-field"
+                  />
                 </div>
 
                 {/* Subcategory Selection */}

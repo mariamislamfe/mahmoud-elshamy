@@ -55,74 +55,71 @@ function SuccessContent() {
 
               {/* Success Message */}
               <h1 className="text-3xl font-bold text-navy mb-3">
-                Complaint Submitted Successfully!
+                تم تقديم الشكوى بنجاح!
               </h1>
               <p className="text-gray-600 mb-8">
-                Your complaint has been received and will be reviewed by our team.
+                تم استلام شكواك وسيتم مراجعتها من قبل فريقنا.
               </p>
 
               {/* Tracking Code */}
               <div className="bg-gradient-to-br from-navy to-navy-light rounded-lg p-8 mb-8">
-                <p className="text-white text-sm mb-3">Your Tracking Code</p>
+                <p className="text-white text-sm mb-3">كود التتبع الخاص بك</p>
                 <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 mb-4">
-                  <p className="text-gold text-4xl font-bold tracking-wider">
+                  <p className="text-gold text-4xl font-bold tracking-wider" dir="ltr">
                     {trackingCode}
                   </p>
                 </div>
-                <p className="text-gray-200 text-sm">
-                  Save this code to track your complaint status
+                <p className="text-red-200 text-sm font-bold">
+                  ⚠️ يرجى حفظ الكود في مكان آمن لتتبع الطلب من خلاله
                 </p>
               </div>
 
               {/* Next Steps */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-left">
-                <h3 className="font-bold text-navy mb-3">What happens next?</h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8" dir="rtl">
+                <h3 className="font-bold text-navy mb-3">ماذا بعد؟</h3>
                 <ol className="space-y-3 text-sm text-gray-700">
                   <li className="flex items-start">
-                    <span className="flex-shrink-0 w-6 h-6 bg-gold text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                    <span className="flex-shrink-0 w-6 h-6 bg-gold text-white rounded-full flex items-center justify-center text-xs font-bold ml-3">
                       1
                     </span>
                     <div>
-                      <strong>Review (24-48 hours):</strong> Our team will review your
-                      complaint and assign it to the relevant department.
+                      <strong>المراجعة (24-48 ساعة):</strong> سيقوم فريقنا بمراجعة شكواك وإحالتها إلى القسم المختص.
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="flex-shrink-0 w-6 h-6 bg-gold text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                    <span className="flex-shrink-0 w-6 h-6 bg-gold text-white rounded-full flex items-center justify-center text-xs font-bold ml-3">
                       2
                     </span>
                     <div>
-                      <strong>Investigation:</strong> The complaint will be investigated
-                      and we may contact you for additional information.
+                      <strong>التحقيق:</strong> سيتم التحقيق في الشكوى وقد نتصل بك للحصول على معلومات إضافية.
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <span className="flex-shrink-0 w-6 h-6 bg-gold text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                    <span className="flex-shrink-0 w-6 h-6 bg-gold text-white rounded-full flex items-center justify-center text-xs font-bold ml-3">
                       3
                     </span>
                     <div>
-                      <strong>Resolution:</strong> Once resolved, the status will be
-                      updated and you will be notified.
+                      <strong>الحل:</strong> بمجرد حل المشكلة، سيتم تحديث الحالة وسيتم إخطارك.
                     </div>
                   </li>
                 </ol>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4" dir="rtl">
                 <Link href={`/track?code=${trackingCode}`} className="btn-primary flex-1 text-center">
-                  Track This Complaint
+                  تتبع هذه الشكوى
                 </Link>
                 <Link href="/services" className="btn-secondary flex-1 text-center">
-                  Submit Another
+                  تقديم شكوى أخرى
                 </Link>
               </div>
 
               {/* Additional Info */}
-              <div className="mt-8 pt-8 border-t text-sm text-gray-600">
+              <div className="mt-8 pt-8 border-t text-sm text-gray-600" dir="rtl">
                 <p>
-                  You can track your complaint anytime using the tracking code above.
-                  Make sure to save it for future reference.
+                  يمكنك تتبع شكواك في أي وقت باستخدام كود التتبع أعلاه أو رقم هاتفك.
+                  تأكد من حفظه للرجوع إليه مستقبلاً.
                 </p>
               </div>
             </div>

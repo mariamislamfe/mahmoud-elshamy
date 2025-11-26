@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ComplaintStatus, ComplaintStatusArabic, Complaint } from '@/lib/database.types'
+import { ComplaintStatus, Complaint } from '@/lib/database.types'
 import { getStatusColor, getStatusText, getStatusIcon } from '@/lib/helpers'
 
 export default function AdminPage() {
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null) // null = loading, false = not admin, true = admin
-  const [userEmail, setUserEmail] = useState<string>('')
   const [complaints, setComplaints] = useState<Complaint[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -42,8 +41,6 @@ export default function AdminPage() {
       setIsAdmin(false)
       return
     }
-
-    setUserEmail(user.email || '')
 
     // Check if user is in admins table
     const { data: adminData, error: adminError } = await supabase
@@ -154,31 +151,16 @@ export default function AdminPage() {
     )
   }
 
-  // Access Denied Screen
+  // Access Denied - Redirect to Login
   if (isAdmin === false) {
+    router.push('/admin/login')
     return (
-      <div className="min-h-screen bg-gradient-to-br from-navy via-navy-light to-navy flex items-center justify-center p-4" dir="rtl">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6">
-            <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+      <div className="min-h-screen bg-gradient-to-br from-navy via-navy-light to-navy flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6 animate-pulse">
+            <span className="text-navy text-4xl font-black">ن</span>
           </div>
-
-          <h1 className="text-3xl font-black text-navy mb-4">
-            هذه الصفحة للإدارة فقط
-          </h1>
-
-          <p className="text-gray-600 mb-8">
-            عذراً، ليس لديك صلاحية للوصول إلى لوحة التحكم الإدارية.
-          </p>
-
-          <Link
-            href="/"
-            className="inline-block bg-navy hover:bg-navy-light text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            العودة للصفحة الرئيسية
-          </Link>
+          <p className="text-white text-lg font-bold">جاري التوجيه...</p>
         </div>
       </div>
     )

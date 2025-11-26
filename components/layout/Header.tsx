@@ -2,35 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function Header() {
   const pathname = usePathname()
-  const router = useRouter()
-  const [user, setUser] = useState<any>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  useEffect(() => {
-    const supabase = createClient()
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/')
-  }
 
   const navLinks = [
     { href: '/', label: 'الرئيسية' },
@@ -71,28 +47,6 @@ export default function Header() {
             ))}
           </div>
 
-          {/* Auth Button */}
-          <div className="hidden md:block">
-            {user ? (
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 font-medium">مرحباً</span>
-                <button
-                  onClick={handleSignOut}
-                  className="text-navy hover:text-gold font-bold transition-all duration-200 px-4 py-2 rounded-lg hover:bg-gold/10"
-                >
-                  تسجيل الخروج
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/auth/login"
-                className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                تسجيل الدخول
-              </Link>
-            )}
-          </div>
-
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -126,27 +80,6 @@ export default function Header() {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-4 border-t-2 border-gray-100">
-                {user ? (
-                  <button
-                    onClick={() => {
-                      handleSignOut()
-                      setMobileMenuOpen(false)
-                    }}
-                    className="w-full text-navy hover:text-gold font-bold transition-all duration-200 py-3 px-4 rounded-lg hover:bg-gold/10 text-right"
-                  >
-                    تسجيل الخروج
-                  </button>
-                ) : (
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg text-center transition-all duration-200 shadow-lg"
-                  >
-                    تسجيل الدخول
-                  </Link>
-                )}
-              </div>
             </div>
           </div>
         )}

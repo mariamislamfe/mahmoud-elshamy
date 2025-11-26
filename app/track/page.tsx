@@ -5,15 +5,15 @@ import { useSearchParams } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/client'
-import type { Complaint, ComplaintStatus } from '@/lib/database.types'
+import type { Complaint } from '@/lib/database.types'
 import { getStatusColor, getStatusText, getStatusIcon } from '@/lib/helpers'
 
 function TrackingContent() {
   const searchParams = useSearchParams()
   const codeFromUrl = searchParams.get('code') || ''
 
-  const [trackingCode, setTrackingCode] = useState(codeFromUrl)
-  const [complaint, setComplaint] = useState<Complaint | null>(null)
+  const [searchValue, setSearchValue] = useState(codeFromUrl)
+  const [complaints, setComplaints] = useState<Complaint[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,32 +24,41 @@ function TrackingContent() {
   }, [codeFromUrl])
 
   const handleTrack = async (code?: string) => {
-    const searchCode = code || trackingCode
-    if (!searchCode.trim()) {
-      setError('يرجى إدخال كود التتبع')
+    const searchTerm = (code || searchValue).trim()
+    if (!searchTerm) {
+      setError('يرجى إدخال كود التتبع أو رقم الهاتف')
       return
     }
 
     setLoading(true)
     setError('')
-    setComplaint(null)
+    setComplaints([])
 
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('*')
-        .eq('tracking_code', searchCode.toUpperCase())
-        .single()
+
+      // البحث بكود التتبع أو رقم الهاتف
+      let query = supabase.from('complaints').select('*')
+
+      // إذا كان يبدأ بـ C فهو كود تتبع
+      if (searchTerm.toUpperCase().startsWith('C')) {
+        query = query.eq('tracking_code', searchTerm.toUpperCase())
+      } else {
+        // وإلا فهو رقم هاتف
+        query = query.eq('phone', searchTerm)
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          throw new Error('الشكوى غير موجودة. يرجى التحقق من كود التتبع.')
-        }
         throw error
       }
 
-      setComplaint(data)
+      if (!data || data.length === 0) {
+        throw new Error('لم يتم العثور على أي شكاوى. يرجى التحقق من البيانات المدخلة.')
+      }
+
+      setComplaints(data)
     } catch (err: any) {
       setError(err.message || 'فشل في تتبع الشكوى')
     } finally {
@@ -80,7 +89,7 @@ function TrackingContent() {
             <div className="max-w-4xl mx-auto">
               {/* Tracking Form */}
               <div className="card mb-8">
-                <h2 className="text-xl font-bold text-navy mb-4">أدخل كود التتبع</h2>
+                <h2 className="text-xl font-bold text-navy mb-4">أدخل كود التتبع أو رقم الهاتف</h2>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()
@@ -90,18 +99,17 @@ function TrackingContent() {
                 >
                   <input
                     type="text"
-                    value={trackingCode}
-                    onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
-                    placeholder="مثال: C123456"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    placeholder="مثال: C123456 أو 01234567890"
                     className="input-field flex-1"
-                    maxLength={10}
                   />
                   <button
                     type="submit"
                     disabled={loading}
                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'جاري البحث...' : 'تتبع'}
+                    {loading ? 'جاري البحث...' : 'بحث'}
                   </button>
                 </form>
 
@@ -112,9 +120,18 @@ function TrackingContent() {
                 )}
               </div>
 
-              {/* Complaint Details */}
-              {complaint && (
-                <div className="card mb-8">
+              {/* Results Count */}
+              {complaints.length > 0 && (
+                <div className="mb-6">
+                  <p className="text-gray-700 font-medium">
+                    تم العثور على <span className="text-navy font-bold">{complaints.length}</span> شكوى
+                  </p>
+                </div>
+              )}
+
+              {/* Complaints List */}
+              {complaints.map((complaint) => (
+                <div key={complaint.id} className="card mb-8">
                   <div className="flex items-start justify-between mb-6">
                     <div>
                       <h2 className="text-2xl font-bold text-navy mb-2">
@@ -275,7 +292,7 @@ function TrackingContent() {
                     </div>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         </section>

@@ -8,6 +8,7 @@ import Link from 'next/link'
 
 export default function ArticlesAdminPage() {
   const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -22,13 +23,41 @@ export default function ArticlesAdminPage() {
   const [published, setPublished] = useState(true)
 
   useEffect(() => {
-    const auth = localStorage.getItem('admin_authenticated')
-    if (auth !== 'true') {
-      router.push('/admin')
+    checkAdminStatus()
+  }, [])
+
+  useEffect(() => {
+    if (isAdmin === true) {
+      fetchArticles()
+    }
+  }, [isAdmin])
+
+  const checkAdminStatus = async () => {
+    const supabase = createClient()
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      setIsAdmin(false)
+      router.push('/admin/login')
       return
     }
-    fetchArticles()
-  }, [router])
+
+    // Check if user is in admins table
+    const { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('email', user.email)
+      .single()
+
+    if (adminError || !adminData) {
+      setIsAdmin(false)
+      router.push('/admin/login')
+    } else {
+      setIsAdmin(true)
+    }
+  }
 
   const fetchArticles = async () => {
     setLoading(true)
@@ -174,6 +203,34 @@ export default function ArticlesAdminPage() {
     } else {
       fetchArticles()
     }
+  }
+
+  // Loading State
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-navy via-navy-light to-navy flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6 animate-pulse">
+            <span className="text-navy text-4xl font-black">ن</span>
+          </div>
+          <p className="text-white text-lg font-bold">جاري التحقق من الصلاحيات...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Access Denied - Redirecting
+  if (isAdmin === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-navy via-navy-light to-navy flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-lg mx-auto mb-6 animate-pulse">
+            <span className="text-navy text-4xl font-black">ن</span>
+          </div>
+          <p className="text-white text-lg font-bold">جاري التوجيه...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
