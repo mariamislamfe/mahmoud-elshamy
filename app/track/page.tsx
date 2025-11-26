@@ -26,7 +26,7 @@ function TrackingContent() {
   const handleTrack = async (code?: string) => {
     const searchTerm = (code || searchValue).trim()
     if (!searchTerm) {
-      setError('يرجى إدخال كود التتبع أو رقم الهاتف')
+      setError('يرجى إدخال كود التتبع أو الرقم القومي')
       return
     }
 
@@ -37,15 +37,15 @@ function TrackingContent() {
     try {
       const supabase = createClient()
 
-      // البحث بكود التتبع أو رقم الهاتف
+      // البحث بكود التتبع أو الرقم القومي
       let query = supabase.from('complaints').select('*')
 
       // إذا كان يبدأ بـ C فهو كود تتبع
       if (searchTerm.toUpperCase().startsWith('C')) {
         query = query.eq('tracking_code', searchTerm.toUpperCase())
       } else {
-        // وإلا فهو رقم هاتف
-        query = query.eq('phone', searchTerm)
+        // وإلا فهو رقم قومي
+        query = query.eq('national_id', searchTerm)
       }
 
       const { data, error } = await query.order('created_at', { ascending: false })
@@ -78,7 +78,7 @@ function TrackingContent() {
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl font-bold mb-4">تتبع شكواك</h1>
               <p className="text-xl text-gray-200">
-                أدخل كود التتبع للاطلاع على حالة الشكوى
+                أدخل كود التتبع أو الرقم القومي للاطلاع على حالة الشكوى
               </p>
             </div>
           </div>
@@ -89,25 +89,25 @@ function TrackingContent() {
             <div className="max-w-4xl mx-auto">
               {/* Tracking Form */}
               <div className="card mb-8">
-                <h2 className="text-xl font-bold text-navy mb-4">أدخل كود التتبع أو رقم الهاتف</h2>
+                <h2 className="text-xl font-bold text-navy mb-4">أدخل كود التتبع أو الرقم القومي</h2>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()
                     handleTrack()
                   }}
-                  className="flex gap-4"
+                  className="flex flex-col sm:flex-row gap-4"
                 >
                   <input
                     type="text"
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    placeholder="مثال: C123456 أو 01234567890"
+                    placeholder="مثال: C123456 أو 12345678901234"
                     className="input-field flex-1"
                   />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                   >
                     {loading ? 'جاري البحث...' : 'بحث'}
                   </button>
@@ -155,8 +155,18 @@ function TrackingContent() {
                         <p className="text-gray-900">{complaint.full_name || 'غير متوفر'}</p>
                       </div>
                       <div>
+                        <label className="text-sm font-medium text-gray-500">الرقم القومي</label>
+                        <p className="text-gray-900 font-mono" dir="ltr">{complaint.national_id}</p>
+                      </div>
+                      <div>
                         <label className="text-sm font-medium text-gray-500">الفئة</label>
                         <p className="text-gray-900">{complaint.category}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          رقم التواصل
+                        </label>
+                        <p className="text-gray-900">{complaint.phone}</p>
                       </div>
                     </div>
 
@@ -172,12 +182,6 @@ function TrackingContent() {
                         <label className="text-sm font-medium text-gray-500">الموقع</label>
                         <p className="text-gray-900">{complaint.location}</p>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">
-                          رقم التواصل
-                        </label>
-                        <p className="text-gray-900">{complaint.phone}</p>
-                      </div>
                     </div>
 
                     {complaint.image_url && (
@@ -186,7 +190,7 @@ function TrackingContent() {
                         <img
                           src={complaint.image_url}
                           alt="صورة الشكوى"
-                          className="mt-2 rounded-lg max-w-md border border-gray-200"
+                          className="mt-2 rounded-lg w-full max-w-md border border-gray-200"
                         />
                       </div>
                     )}

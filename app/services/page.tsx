@@ -15,6 +15,7 @@ export default function ServicesPage() {
 
   // بيانات الفورم
   const [fullName, setFullName] = useState('')
+  const [nationalId, setNationalId] = useState('')
   const [phone, setPhone] = useState('')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
@@ -70,7 +71,7 @@ export default function ServicesPage() {
       const trackingCode = 'C' + Math.floor(100000 + Math.random() * 900000).toString()
       console.log('🎫 كود التتبع:', trackingCode)
 
-      const complaintData = {
+      const complaintData: any = {
         full_name: fullName,
         phone,
         category: selectedCategory,
@@ -81,6 +82,11 @@ export default function ServicesPage() {
         attachments: [],
         status: 'not_reviewed' as const,
         tracking_code: trackingCode
+      }
+
+      // إضافة national_id فقط لو موجود
+      if (nationalId) {
+        complaintData.national_id = nationalId
       }
 
       console.log('📝 جاري إضافة الشكوى:', complaintData)
@@ -95,17 +101,13 @@ export default function ServicesPage() {
       console.log('📊 Response:', { data, error })
 
       if (error) {
-        console.error('❌ خطأ تفصيلي:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
+        console.error('❌ خطأ تفصيلي:', error)
+        console.error('البيانات المرسلة:', complaintData)
 
         // رسالة خطأ واضحة للمستخدم
         const errorMsg = error.message || 'خطأ غير معروف'
         const errorCode = error.code || 'لا يوجد كود'
-        alert(`❌ خطأ في إرسال الشكوى:\n\nالرسالة: ${errorMsg}\nالكود: ${errorCode}\n\nيرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.`)
+        alert(`❌ خطأ في إرسال الشكوى:\n\nالرسالة: ${errorMsg}\nالكود: ${errorCode}\n\nالتفاصيل: ${JSON.stringify(error)}\n\nيرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.`)
         setSubmitting(false)
         return
       }
@@ -241,6 +243,26 @@ export default function ServicesPage() {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent"
                         placeholder="أدخل اسمك الكامل"
                       />
+                    </div>
+
+                    {/* الرقم القومي */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        الرقم القومي *
+                      </label>
+                      <input
+                        type="text"
+                        value={nationalId}
+                        onChange={(e) => setNationalId(e.target.value)}
+                        required
+                        maxLength={14}
+                        pattern="[0-9]{14}"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent"
+                        placeholder="أدخل الرقم القومي (14 رقم)"
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        الرقم القومي المكون من 14 رقم - سيستخدم لتتبع الشكوى
+                      </p>
                     </div>
 
                     {/* رقم الهاتف */}

@@ -29,6 +29,7 @@ export interface Complaint {
   id: string
   user_id?: string  // اختياري الآن
   full_name: string  // الاسم مباشرة
+  national_id: string  // الرقم القومي
   category: string
   subcategory: string
   description: string

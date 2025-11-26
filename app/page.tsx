@@ -44,8 +44,8 @@ export default function HomePage() {
 
   <div className="container mx-auto px-4 md:px-8 relative z-10 w-full">
     <div className="grid grid-cols-1 md:grid-cols-12 gap-0 items-center">
-      {/* النصوص - على اليمين - WIDER */}
-<div className="md:col-span-7 lg:col-span-7 text-white space-y-3 md:space-y-5 pb-6 md:pb-10 order-2 md:order-1 animate-fade-in-up pt-20">
+      {/* النصوص - على اليمين - عرض كامل على الموبايل */}
+<div className="col-span-1 md:col-span-7 lg:col-span-7 text-white space-y-3 md:space-y-5 pb-6 md:pb-10 md:order-1 animate-fade-in-up pt-8 md:pt-20">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-gold to-gold-light text-white px-5 md:px-7 py-2.5 md:py-3.5 rounded-full text-sm md:text-base font-bold shadow-lg border border-white/20">
           <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
           <span>عضو مجلس النواب</span>
@@ -80,27 +80,27 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* صورة النائب - على الشمال - NARROWER */}
-      <div className="md:col-span-5 lg:col-span-5 flex justify-center md:justify-end items-end order-1 md:order-2 animate-fade-in-right relative">
+      {/* صورة النائب - على الشمال - مخفية على الموبايل */}
+      <div className="hidden md:flex md:col-span-5 lg:col-span-5 justify-center md:justify-end items-end md:order-2 animate-fade-in-right relative">
         <div className="relative w-full max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl">
           <div className="relative">
             <img
               src="/images/member.png"
               alt="النائب"
-              className="h-[380px] md:h-[540px] lg:h-[620px] w-auto mx-auto md:mx-0 md:ml-auto filter drop-shadow-2xl relative z-10"
+              className="h-[540px] lg:h-[620px] w-auto mx-auto md:mx-0 md:ml-auto filter drop-shadow-2xl relative z-10"
               style={{
                 objectFit: 'contain',
                 objectPosition: 'bottom',
                 transformOrigin: 'bottom center'
               }}
             />
-            {/* Gradient fade من الأسفل - أقصر على الموبايل */}
-            <div className="absolute bottom-0 left-0 right-0 h-24 md:h-40 lg:h-48 bg-gradient-to-t from-navy via-navy/70 to-transparent z-20 pointer-events-none"></div>
+            {/* Gradient fade من الأسفل */}
+            <div className="absolute bottom-0 left-0 right-0 h-40 lg:h-48 bg-gradient-to-t from-navy via-navy/70 to-transparent z-20 pointer-events-none"></div>
           </div>
           {/* Decorative elements */}
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-48 md:w-64 lg:w-80 h-24 md:h-32 bg-gold/30 rounded-full blur-3xl animate-pulse-slow"></div>
-          <div className="hidden md:block absolute top-20 right-0 w-20 md:w-24 h-20 md:h-24 bg-gold/20 rounded-full blur-2xl animate-float"></div>
-          <div className="hidden md:block absolute bottom-40 left-0 w-12 md:w-16 h-12 md:h-16 bg-white/10 rounded-full blur-xl animate-float-delayed"></div>
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-64 lg:w-80 h-32 bg-gold/30 rounded-full blur-3xl animate-pulse-slow"></div>
+          <div className="absolute top-20 right-0 w-20 md:w-24 h-20 md:h-24 bg-gold/20 rounded-full blur-2xl animate-float"></div>
+          <div className="absolute bottom-40 left-0 w-12 md:w-16 h-12 md:h-16 bg-white/10 rounded-full blur-xl animate-float-delayed"></div>
         </div>
       </div>
     </div>

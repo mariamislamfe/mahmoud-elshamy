@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Article } from '@/lib/database.types'
-import Link from 'next/link'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 
 export default function ArticlesAdminPage() {
   const router = useRouter()
@@ -234,37 +234,26 @@ export default function ArticlesAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Header */}
-      <header className="bg-white shadow-md border-b-2 border-gold/20">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin" className="text-navy hover:text-gold transition">
-                ← العودة للوحة التحكم
-              </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-navy to-navy-light rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-gold text-2xl font-black">ن</span>
-                </div>
-                <div>
-                  <div className="text-navy font-black text-xl">إدارة المقالات</div>
-                  <div className="text-gray-500 text-xs font-medium">إضافة وتعديل المقالات</div>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
+      {/* Sidebar */}
+      <AdminSidebar />
 
+      {/* Main Content */}
+      <div className="flex-1 mr-64">
+        <div className="container mx-auto px-8 py-8">
+          {/* Page Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-black text-navy mb-2">إدارة المقالات</h1>
+              <p className="text-gray-600">إضافة وتعديل وحذف المقالات</p>
+            </div>
             <button
               onClick={() => handleOpenModal()}
-              className="bg-gold hover:bg-gold-dark text-white font-bold py-2 px-6 rounded-lg transition-all duration-200"
+              className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg"
             >
               ➕ مقال جديد
             </button>
           </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
         {/* إحصائيات */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-6 text-center hover:shadow-xl transition border-r-4 border-navy">
@@ -374,6 +363,7 @@ export default function ArticlesAdminPage() {
               </table>
             </div>
           )}
+        </div>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ function ComplaintFormContent() {
   const [error, setError] = useState('')
   const [formData, setFormData] = useState<any>({
     fullName: '',
+    nationalId: '',
     phone: '',
     subcategory: '',
     description: '',
@@ -54,6 +55,7 @@ function ComplaintFormContent() {
 
       const complaintData = {
         full_name: formData.fullName || '',
+        national_id: formData.nationalId || '',
         category: category.name,
         subcategory: formData.subcategory || '',
         description: formData.description || '',
@@ -132,6 +134,28 @@ function ComplaintFormContent() {
                     placeholder="أدخل اسمك الكامل"
                     className="input-field"
                   />
+                </div>
+
+                {/* National ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    الرقم القومي <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.nationalId || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, nationalId: e.target.value })
+                    }
+                    placeholder="أدخل الرقم القومي (14 رقم)"
+                    maxLength={14}
+                    pattern="[0-9]{14}"
+                    className="input-field"
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    الرقم القومي المكون من 14 رقم - سيستخدم لتتبع الشكوى
+                  </p>
                 </div>
 
                 {/* Subcategory Selection */}
